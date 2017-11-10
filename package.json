@@ -11,7 +11,8 @@
   },
   "scripts": {
     "getListings": "node getListings.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "deploy": "git push heroku master"
   },
   "dependencies": {
     "ejs": "2.5.7",
