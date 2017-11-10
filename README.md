@@ -11,6 +11,6 @@ https://guesty-home-assignment.herokuapp.com/
 4. `yarn deploy` - to deploy the project to Heroku.
 
 ### Formula
-I choose the following scorring formula: 20% - property rating +  80% - property availablity.
+I choose the following scoring formula: 20% - property rating + 80% - property availability.
 
-As these are the best paramaters of apartment demand.
+As these are the best parameters of apartment demand.
