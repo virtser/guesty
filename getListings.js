@@ -1,70 +1,10 @@
-const request = require('request-promise');
+const airbnb = require('./services/airbnb');
 const fs = require('fs');
 const moment = require('moment');
 
-const AIRBNB_API_BASE_URL = 'https://api.airbnb.com/v2';
-// API client id should not be commited, but loaded from process.env var.
-// Libraries like 'dotenv' should be used to manage such secret app configuration.
-const AIRBNB_API_CLIENT_ID = '3092nxybyb0otqw18e8nh5nty';
 const AIRBNB_API_MAX_ITEMS = 50;
 const AIRBNB_API_MAX_LISTINGS = 1000;
 const AIRBNB_API_DATE_FORMAT = 'YYYY-MM-DD';
-
-const requestOptions = {
-  qs: {
-    client_id: AIRBNB_API_CLIENT_ID
-  },
-  json: true
-};
-
-// Make API call to get listings page.
-function getListingsPage(location, propertyType, limit, offset) {
-  let options = Object.assign({}, requestOptions); // Clone object.
-  options.qs.location = location;
-  options.qs.property_type = propertyType;
-  options.qs._limit = limit;
-  options.qs._offset = offset; // Set the new offset.
-
-  return request(`${AIRBNB_API_BASE_URL}/search_results`, options)
-  .then(function (results) {
-      let page = { listings: [], pagination: results.metadata.pagination };
-      results.search_results.map(item => {
-        page.listings.push({
-          listingId: item.listing.id,
-          latitude: item.listing.lat,
-          longitude: item.listing.lng,
-          rating: item.listing.star_rating || 0
-        });
-      });
-      return page;
-  })
-  .catch(err => {
-    console.error('getListingsPage', err);
-    return null;
-  });
-}
-
-// Make API call to get listing calendar.
-function getListingCalendar(listingId, startDate, endDate) {
-  let options = Object.assign({}, requestOptions); // Clone object.
-  options.qs.listing_id = listingId;
-  options.qs.start_date = startDate
-  // Looking for calendar events in the range of 1 year from now.
-  options.qs.end_date = endDate;
-
-  return request(`${AIRBNB_API_BASE_URL}/calendar_days`, options)
-  .then(function (results) {
-    let bookings = 0;
-    results.calendar_days.map(item => {
-      if (!item.available) bookings++ ;
-    })
-    return bookings;
-  })
-  .catch(err => {
-    console.error('getListingCalendar', err);
-    return 0;
-  });
-}
 
 function clalculateListingScore(rating, bookings) {
   /**
@@ -79,10 +19,10 @@ function clalculateListingScore(rating, bookings) {
 }
 
 function writeDataToFile(data) {
-  const lisingsData = require('./listingsData.json') || [];
+  const lisingsData = require('./data/listingsData.json') || [];
   lisingsData.push(data);
 
-  fs.writeFile('listingsData.json', JSON.stringify(lisingsData), (err) => {
+  fs.writeFile(__dirname + '/data/listingsData.json', JSON.stringify(lisingsData), (err) => {
     if (err) {
       console.error('writeDataToFile', err);
       throw err;
@@ -105,11 +45,11 @@ async function getAllAndWrite(propertyType, offset) {
   const START_DATE = moment().format(AIRBNB_API_DATE_FORMAT);
   const END_DATE = moment().add(1, 'years').format(AIRBNB_API_DATE_FORMAT);
 
-  return getListingsPage(LOCATION, propertyType, AIRBNB_API_MAX_ITEMS, offset)
+  return airbnb.getListingsPage(LOCATION, propertyType, AIRBNB_API_MAX_ITEMS, offset)
   .then(delayPromise(5000))
   .then(listingsData => {
     listingsData.listings.forEach(listing => {
-      return getListingCalendar(listing.listingId, START_DATE, END_DATE)
+      return airbnb.getListingCalendar(listing.listingId, START_DATE, END_DATE)
       .then(delayPromise(5000))
       .then(bookings => {
         writeDataToFile({
@@ -131,8 +71,8 @@ async function main() {
     let pagination = { next_offset: 0, result_count: AIRBNB_API_MAX_ITEMS };
 
     while(pagination.result_count === AIRBNB_API_MAX_ITEMS && pagination.next_offset < AIRBNB_API_MAX_LISTINGS) {
-        pagination = await getAllAndWrite(PROPERTY_TYPES[i], pagination.next_offset);
-        console.log(`Property type: ${PROPERTY_TYPES[i]}, number of results: ${pagination.result_count}, next page offset: ${pagination.next_offset}`);
+      pagination = await getAllAndWrite(PROPERTY_TYPES[i], pagination.next_offset);
+      console.log(`Property type: ${PROPERTY_TYPES[i]}, number of results: ${pagination.result_count}, next page offset: ${pagination.next_offset}`);
     }
   }
 }

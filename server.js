@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const lisingsData = require('./listingsData.json');
+const lisingsData = require('./data/listingsData.json');
 const PORT = process.env.PORT || 8080;
 
 // set the view engine to ejs
