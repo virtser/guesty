@@ -5,10 +5,10 @@
 https://guesty-home-assignment.herokuapp.com/
 
 ### How to
-1. 'yarn' - to install all project dependencies.
-2. 'yarn getListings' - to get all listings data into listingsData.json file.
-3. 'yarn start' - to start the web server which shows the heat map.
-4. 'git push heroku master' - to deploy the project to Heroku.
+1. `yarn` - to install all project dependencies.
+2. `yarn getListings` - to get all listings data into listingsData.json file.
+3. `yarn start` - to start the web server which shows the heat map.
+4. `git push heroku master` - to deploy the project to Heroku.
 
 ### Formula
 I choose the following scorring formula:
