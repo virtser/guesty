@@ -11,8 +11,5 @@ https://guesty-home-assignment.herokuapp.com/
 4. `git push heroku master` - to deploy the project to Heroku.
 
 ### Formula
-I choose the following scorring formula:
-20% - property rating
-80% - property availablity
-
+I choose the following scorring formula: 20% - property rating +  80% - property availablity
 As these are the best paramaters of apartment demand.
