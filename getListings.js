@@ -36,7 +36,6 @@ function getListingsPage(location, propertyType, limit, offset) {
           rating: item.listing.star_rating || 0
         });
       });
-      console.log(`Got number of listing results: ${page.listings.length}, Next page offset: ${page.pagination.next_offset}`);
       return page;
   })
   .catch(err => {
@@ -110,7 +109,7 @@ async function getAllAndWrite(propertyType, offset) {
   .then(delayPromise(5000))
   .then(listingsData => {
     listingsData.listings.forEach(listing => {
-      getListingCalendar(listing.listingId, START_DATE, END_DATE)
+      return getListingCalendar(listing.listingId, START_DATE, END_DATE)
       .then(delayPromise(5000))
       .then(bookings => {
         writeDataToFile({
@@ -127,11 +126,13 @@ async function getAllAndWrite(propertyType, offset) {
 
 async function main() {
   const PROPERTY_TYPES = ['Apartment', 'Hostel', 'Bed & Breakfast', 'Other'];
-  let pagination = { next_offset: 0, result_count: AIRBNB_API_MAX_ITEMS };
 
   for(let i=0 ; i < PROPERTY_TYPES.length ; i++) {
+    let pagination = { next_offset: 0, result_count: AIRBNB_API_MAX_ITEMS };
+
     while(pagination.result_count === AIRBNB_API_MAX_ITEMS && pagination.next_offset < AIRBNB_API_MAX_LISTINGS) {
         pagination = await getAllAndWrite(PROPERTY_TYPES[i], pagination.next_offset);
+        console.log(`Property type: ${PROPERTY_TYPES[i]}, number of results: ${pagination.result_count}, next page offset: ${pagination.next_offset}`);
     }
   }
 }
