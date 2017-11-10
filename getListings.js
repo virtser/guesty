@@ -6,7 +6,8 @@ const AIRBNB_API_BASE_URL = 'https://api.airbnb.com/v2';
 // API client id should not be commited, but loaded from process.env var.
 // Libraries like 'dotenv' should be used to manage such secret app configuration.
 const AIRBNB_API_CLIENT_ID = '3092nxybyb0otqw18e8nh5nty';
-const AIRBNB_API_MAX_LIMIT = 50;
+const AIRBNB_API_MAX_ITEMS = 50;
+const AIRBNB_API_MAX_LISTINGS = 1000;
 const AIRBNB_API_DATE_FORMAT = 'YYYY-MM-DD';
 
 const requestOptions = {
@@ -79,7 +80,10 @@ function clalculateListingScore(rating, bookings) {
 }
 
 function writeDataToFile(data) {
-  fs.appendFile('listingsData.json', JSON.stringify(data) + ',', (err) => {
+  const lisingsData = require('./listingsData.json') || [];
+  lisingsData.push(data);
+
+  fs.writeFile('listingsData.json', JSON.stringify(lisingsData), (err) => {
     if (err) {
       console.error('writeDataToFile', err);
       throw err;
@@ -87,20 +91,31 @@ function writeDataToFile(data) {
   });
 }
 
-async function getAllAndWrite(offset) {
-  const LOCATION = 'New-York'; // Fixed to specific city.
-  const PROPERTY_TYPE = 'Apartment'; // Fixed to return apartments only.
+function delayPromise(duration) {
+  return function(...args){
+    return new Promise(function(resolve, reject){
+      setTimeout(function(){
+        resolve(...args);
+      }, duration)
+    });
+  };
+}
+
+async function getAllAndWrite(propertyType, offset) {
+  const LOCATION = 'Manhattan'; // Fixed to specific city.
   const START_DATE = moment().format(AIRBNB_API_DATE_FORMAT);
   const END_DATE = moment().add(1, 'years').format(AIRBNB_API_DATE_FORMAT);
 
-  return getListingsPage(LOCATION, PROPERTY_TYPE, AIRBNB_API_MAX_LIMIT, offset)
+  return getListingsPage(LOCATION, propertyType, AIRBNB_API_MAX_ITEMS, offset)
+  .then(delayPromise(5000))
   .then(listingsData => {
     listingsData.listings.forEach(listing => {
       getListingCalendar(listing.listingId, START_DATE, END_DATE)
+      .then(delayPromise(5000))
       .then(bookings => {
         writeDataToFile({
-          lat: listing.latitude,
-          lng: listing.longitude,
+          latitude: listing.latitude,
+          longitude: listing.longitude,
           score: clalculateListingScore(listing.rating, bookings)
         });
       })
@@ -111,10 +126,13 @@ async function getAllAndWrite(offset) {
 }
 
 async function main() {
-  let pagination = { next_offset: 0, result_count: 50 };
+  const PROPERTY_TYPES = ['Apartment', 'Hostel', 'Bed & Breakfast', 'Other'];
+  let pagination = { next_offset: 0, result_count: AIRBNB_API_MAX_ITEMS };
 
-  while(pagination && pagination.result_count === AIRBNB_API_MAX_LIMIT) {
-    pagination = await getAllAndWrite(pagination.next_offset);
+  for(let i=0 ; i < PROPERTY_TYPES.length ; i++) {
+    while(pagination.result_count === AIRBNB_API_MAX_ITEMS && pagination.next_offset < AIRBNB_API_MAX_LISTINGS) {
+        pagination = await getAllAndWrite(PROPERTY_TYPES[i], pagination.next_offset);
+    }
   }
 }
 
