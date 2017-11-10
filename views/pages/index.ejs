@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Guesty home assignment</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Guesty home assignment</h1>
+    <h2>Showing New-York heat map of most demanding apartments</h2>
+
+    <div id="map"></div>
+
+    <script>
+      // https://developers.google.com/maps/documentation/javascript/heatmaplayer
+      var map, heatmap;
+      var lisingsData = <%-JSON.stringify(lisingsData)%>;
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 12,
+          center: {lat: 40.7831, lng: -73.9712}
+        });
+
+        heatmap = new google.maps.visualization.HeatmapLayer({
+          data: getPoints(),
+          map: map
+        });
+      }
+
+      function getPoints() {
+        return lisingsData.map(function(item) {
+          return {
+            location: new google.maps.LatLng(item.latitude, item.longitude),
+            weight: item.score
+          };
+        });
+      }
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD0anX-92vykeYkScvD7DHIE_AkMdaExcU&libraries=visualization&callback=initMap">
+    </script>
+  </body>
+</html>
