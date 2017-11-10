@@ -1,0 +1,21 @@
+{
+  "name": "guesty",
+  "description": "Guesty home assignment",
+  "version": "1.0.0",
+  "main": "server.js",
+  "repository": "git@github.com:virtser/guesty.git",
+  "author": "David Virtser <poison77@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": "8.6.0"
+  },
+  "scripts": {
+    "getListings": "node getListings.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "moment": "2.19.1",
+    "request": "2.83.0",
+    "request-promise": "4.2.2"
+  }
+}
